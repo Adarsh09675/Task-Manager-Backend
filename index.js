@@ -37,7 +37,7 @@ mongoose
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", // local frontend
+      "https://task-managerapp-frontend.netlify.app", // local frontend
       process.env.FRONT_END_URL, // deployed frontend
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
