@@ -1,11 +1,18 @@
 import { errorHandler } from "./error.js"
 import jwt from "jsonwebtoken"
 
+// Verify token middleware
 export const verifyToken = (req, res, next) => {
-  const token = req.cookies.access_token
+  // Accept token from cookie or Authorization header
+  let token = req.cookies.access_token || req.headers["authorization"]
 
   if (!token) {
     return next(errorHandler(401, "Unauthorized"))
+  }
+
+  // If header starts with "Bearer ", remove it
+  if (token.startsWith("Bearer ")) {
+    token = token.split(" ")[1]
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
@@ -14,16 +21,20 @@ export const verifyToken = (req, res, next) => {
     }
 
     req.user = user
-
     next()
   })
 }
 
+// Admin-only middleware
 export const adminOnly = (req, res, next) => {
-  const token = req.cookies.access_token
+  let token = req.cookies.access_token || req.headers["authorization"]
 
   if (!token) {
     return next(errorHandler(401, "Unauthorized"))
+  }
+
+  if (token.startsWith("Bearer ")) {
+    token = token.split(" ")[1]
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
@@ -32,8 +43,6 @@ export const adminOnly = (req, res, next) => {
     }
 
     req.user = user
-
-    console.log(req.user)
 
     if (req.user && req.user.role === "admin") {
       next()
