@@ -1,53 +1,33 @@
-import { errorHandler } from "./error.js"
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
+import { errorHandler } from "./error.js";
 
-// Verify token middleware
+// ================= VERIFY TOKEN =================
 export const verifyToken = (req, res, next) => {
-  // Accept token from cookie or Authorization header
-  let token = req.cookies.access_token || req.headers["authorization"]
+  const token = req.cookies?.access_token;
 
   if (!token) {
-    return next(errorHandler(401, "Unauthorized"))
+    return next(errorHandler(401, "Unauthorized - No token"));
   }
 
-  // If header starts with "Bearer ", remove it
-  if (token.startsWith("Bearer ")) {
-    token = token.split(" ")[1]
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
-      return next(errorHandler(401, "Unauthorized"))
+      return next(errorHandler(401, "Unauthorized - Invalid token"));
     }
 
-    req.user = user
-    next()
-  })
-}
+    req.user = decoded; // { id, role, iat, exp }
+    next();
+  });
+};
 
-// Admin-only middleware
+// ================= ADMIN ONLY =================
 export const adminOnly = (req, res, next) => {
-  let token = req.cookies.access_token || req.headers["authorization"]
-
-  if (!token) {
-    return next(errorHandler(401, "Unauthorized"))
+  if (!req.user) {
+    return next(errorHandler(401, "Unauthorized"));
   }
 
-  if (token.startsWith("Bearer ")) {
-    token = token.split(" ")[1]
+  if (req.user.role !== "admin") {
+    return next(errorHandler(403, "Access denied - Admin only"));
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return next(errorHandler(401, "Unauthorized"))
-    }
-
-    req.user = user
-
-    if (req.user && req.user.role === "admin") {
-      next()
-    } else {
-      return next(errorHandler(403, "Access Denied, admin only!"))
-    }
-  })
-}
+  next();
+};
