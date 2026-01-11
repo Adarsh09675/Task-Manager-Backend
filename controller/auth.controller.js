@@ -34,7 +34,10 @@ export const signup = async (req, res, next) => {
 
     await newUser.save();
 
-    res.status(201).json({ success: true, message: "Signup successful" });
+    res.status(201).json({
+      success: true,
+      message: "Signup successful",
+    });
   } catch (error) {
     next(error);
   }
@@ -75,7 +78,10 @@ export const signin = async (req, res, next) => {
         sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       })
-      .json({ success: true, user: rest });
+      .json({
+        success: true,
+        user: rest,
+      });
   } catch (error) {
     next(error);
   }
@@ -91,7 +97,10 @@ export const signout = async (req, res, next) => {
         sameSite: "none",
       })
       .status(200)
-      .json({ success: true, message: "Logged out successfully" });
+      .json({
+        success: true,
+        message: "Logged out successfully",
+      });
   } catch (error) {
     next(error);
   }
@@ -101,12 +110,17 @@ export const signout = async (req, res, next) => {
 export const userProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
+
     if (!user) {
       return next(errorHandler(404, "User not found"));
     }
 
     const { password: pass, ...rest } = user._doc;
-    res.status(200).json({ success: true, user: rest });
+
+    res.status(200).json({
+      success: true,
+      user: rest,
+    });
   } catch (error) {
     next(error);
   }
@@ -116,6 +130,7 @@ export const userProfile = async (req, res, next) => {
 export const updateUserProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
+
     if (!user) {
       return next(errorHandler(404, "User not found"));
     }
@@ -127,10 +142,18 @@ export const updateUserProfile = async (req, res, next) => {
       user.password = bcryptjs.hashSync(req.body.password, 10);
     }
 
+    if (req.body.profileImageUrl) {
+      user.profileImageUrl = req.body.profileImageUrl;
+    }
+
     await user.save();
 
     const { password: pass, ...rest } = user._doc;
-    res.status(200).json({ success: true, user: rest });
+
+    res.status(200).json({
+      success: true,
+      user: rest,
+    });
   } catch (error) {
     next(error);
   }
@@ -143,8 +166,13 @@ export const uploadImage = async (req, res, next) => {
       return next(errorHandler(400, "No file uploaded"));
     }
 
-    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-    res.status(200).json({ success: true, imageUrl });
+    // Force HTTPS (important for Netlify)
+    const imageUrl = `https://${req.get("host")}/uploads/${req.file.filename}`;
+
+    res.status(200).json({
+      success: true,
+      imageUrl,
+    });
   } catch (error) {
     next(error);
   }
